@@ -17,9 +17,9 @@ let audioCtx;
 const assets = {};
 let assetsLoaded = 0;
 const assetUrls = {
-    playerShip: 'https://badlan.uken.ai/shmup/shmup-ship2.png',
+    playerShip: 'assets/images/shmup-ship2.png',
     enemyShip: 'assets/images/enemy-01.png',
-    bossSkye: 'https://badlan.uken.ai/shmup/boss-skye-spritesheet.png' // Corrected URL
+    bossSkye: 'assets/images/boss-skye-spritesheet.png' // Corrected URL
 };
 const totalAssets = Object.keys(assetUrls).length;
 let showHitbox = false;
