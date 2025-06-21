@@ -18,6 +18,7 @@ const assets = {};
 let assetsLoaded = 0;
 const assetUrls = {
     playerShip: 'https://badlan.uken.ai/shmup/shmup-ship2.png',
+    enemyShip: 'assets/images/enemy-01.png',
     bossSkye: 'https://badlan.uken.ai/shmup/boss-skye-spritesheet.png' // Corrected URL
 };
 const totalAssets = Object.keys(assetUrls).length;
@@ -49,14 +50,49 @@ const ENEMY_BULLET_COLOR = '#ff6666';
 // --- Sound Effects ---
 function playPewSound() {
     if (!audioCtx) return;
-    const oscillator = audioCtx.createOscillator();
+    const now = audioCtx.currentTime;
+
+    // Main oscillator for the bassy shot
+    const mainOscillator = audioCtx.createOscillator();
+    mainOscillator.type = 'sawtooth'; // Harsher tone
+    mainOscillator.frequency.setValueAtTime(150, now); // Start low
+    mainOscillator.frequency.exponentialRampToValueAtTime(300, now + 0.05); // Quick rise
+    mainOscillator.frequency.exponentialRampToValueAtTime(50, now + 0.2); // Drop for a "wobble" feel
+
+    // Gain node for volume envelope
     const gainNode = audioCtx.createGain();
-    oscillator.type = 'triangle';
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.1);
-    oscillator.connect(gainNode).connect(audioCtx.destination);
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.1);
+    gainNode.gain.setValueAtTime(0.6, now); // Initial volume
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.25); // Quick decay
+
+    // Low-frequency oscillator (LFO) for wobble effect
+    const lfo = audioCtx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(15, now); // Wobble speed
+
+    // LFO gain to control the intensity of the wobble
+    const lfoGain = audioCtx.createGain();
+    lfoGain.gain.setValueAtTime(100, now); // How much the LFO affects frequency
+
+    // Connect LFO to LFO Gain, then LFO Gain to the main oscillator's frequency
+    lfo.connect(lfoGain);
+    lfoGain.connect(mainOscillator.frequency);
+
+    // Filter for sound shaping (lowpass for dubstep bass)
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1000, now); // Cutoff frequency
+    filter.Q.setValueAtTime(1, now); // Resonance
+
+    // Connect everything
+    mainOscillator.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    // Start and stop sounds
+    mainOscillator.start(now);
+    lfo.start(now);
+    mainOscillator.stop(now + 0.25);
+    lfo.stop(now + 0.25);
 }
 
 function playWooshSound() {
@@ -286,8 +322,12 @@ function Enemy(x, y, width, height, speed, health = 1, type = 'basic') {
     this.speed = speed; this.health = health; this.type = type;
     this.shootCooldown = Math.random() * 100 + 50;
     this.draw = function() {
-        ctx.fillStyle = ENEMY_COLOR;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        if (assets.enemyShip) {
+            ctx.drawImage(assets.enemyShip, this.x, this.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = ENEMY_COLOR;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
     }
     this.update = function() {
         this.y += this.speed;
