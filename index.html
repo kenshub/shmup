@@ -150,6 +150,9 @@
             </div>
         </div>
     </div>
+    <audio id="backgroundMusic" loop>
+        <source src="https://badlan.uken.ai/shmup/shmup-music.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         // --- Game Setup ---
@@ -160,6 +163,7 @@
         const bossHealthDisplay = document.getElementById('bossHealthDisplay');
         const controlsInfo = document.getElementById('controlsInfo');
         const dPadContainer = document.getElementById('dPadContainer');
+        const backgroundMusic = document.getElementById('backgroundMusic');
 
         let canvasWidth, canvasHeight;
 
@@ -171,7 +175,7 @@
         let assetsLoaded = 0;
         const assetUrls = {
             playerShip: 'https://badlan.uken.ai/shmup/shmup-ship2.png',
-            bossSkye: 'https://badlan.uken.ai/shmup/boss-skye-spritesheet.png' // New boss asset
+            bossSkye: 'https://badlan.uken.ai/shmup/boss-skye-spritesheet.png' // Corrected URL
         };
         const totalAssets = Object.keys(assetUrls).length;
         let showHitbox = false;
@@ -657,6 +661,7 @@
             showTemporaryMessage("HIT!", 500);
             if (lives <= 0) {
                 gameState = 'GAME_OVER';
+                backgroundMusic.pause();
                 if (boss) bossHealthDisplay.style.display = 'none';
             } else {
                 player.startRespawnSequence();
@@ -792,12 +797,14 @@
 
         function drawGameOverScreen() {
             if (!document.getElementById('persistentMessage')) {
+                backgroundMusic.pause();
                 showPersistentMessage(`GAME OVER\nScore: ${score}`, "Restart", startGame);
             }
         }
         
         function drawGameWonScreen() {
              if (!document.getElementById('persistentMessage')) {
+                backgroundMusic.pause();
                 showPersistentMessage(`YOU WON!\nFinal Score: ${score}\n(More friends to battle coming soon!)`, "Play Again?", startGame);
             }
         }
@@ -834,6 +841,9 @@
             player.shootCooldown = 0; player.isInvincible = false; player.invincibilityTimer = 0;
             player.isRespawning = false; player.respawnPauseTimer = 0;
             bossHealthDisplay.style.display = 'none';
+
+            backgroundMusic.currentTime = 0;
+            backgroundMusic.play().catch(e => console.error("Music play failed:", e));
         }
 
         // --- Event Listeners ---
